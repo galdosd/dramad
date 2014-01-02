@@ -8,5 +8,8 @@ import akka.actor.Props;
 
 public abstract class OurActor extends UntypedActor {
 
+	protected ActorRef ourActorOf( Class actorClass ) {
+		return getContext().actorOf(Props.create(actorClass));
+	}
 
 }
