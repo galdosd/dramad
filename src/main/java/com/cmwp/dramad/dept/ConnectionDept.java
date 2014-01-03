@@ -2,49 +2,53 @@ package com.cmwp.dramad.dept;
 
 import com.cmwp.dramad.framework.OurActor;
 
+import java.util.*;
+
 import akka.actor.Props;
 import akka.actor.ActorSystem;
 import akka.actor.ActorRef;
 import akka.actor.ActorRefFactory;
 import akka.io.Tcp; 
-
+import akka.io.TcpSO; 
+import akka.io.TcpMessage; 
+import akka.io.Inet;
 
 public class ConnectionDept extends OurActor {
 	// TODO config/IoC/runtime
 	public final int LISTEN_PORT = 6667;
 	
 	//@Getter
-	private boolean connected = false;
-
-	public static ActorRef actorFrom( ActorRefFactory system ) {
-		return
-			(null!=system) 
-			? system.actorOf(Props.create(ConnectionDept.class))
-			: null
-		;
-	}
+	private boolean listening = false;
 
 	@Override
 	public void preStart() {
-		becomeConnected();
+		becomeListening();
 	}
 
-	void becomeConnected() {
-		if(connected) return;
+	void becomeListening() {
+		if(listening) return;
 		// open listening socket on port
 		// i hope
-		tcpManager.tell( new Tcp.Bind( getSelf(), new java.net.InetSocketAddress(LISTEN_PORT), 30, null /*XXX is null ok here? */), getSelf() ); 
+		final List<Inet.SocketOption> options = new ArrayList<Inet.SocketOption>();
+		options.add(TcpSO.reuseAddress(true));
+		tcpManager.tell( TcpMessage.bind( getSelf(), new java.net.InetSocketAddress(LISTEN_PORT), 30, options), getSelf() );
 	}
 
 	public void onReceive( Object msg ) {
 		if( null != msg ) {
-			System.out.println(msg.getClass().getName() + " --> " + this.getClass().getName());
+			System.out.println(msg.getClass().getName() + "("+ msg.toString() +") --> " + this.getClass().getName());
+		}
+		else {
+			System.out.println("null message -->" + this.getClass().getName());
 		}
 		if( msg instanceof Tcp.Bound ) {
-			System.out.println( "We are connected now");
-			connected = true;
+			System.out.println( "We are listening now");
+			listening = true;
 		}
-		System.out.println( "ConnectionDept: We got signal too ! " );
+		else if( msg instanceof Tcp.Connected ) {
+			System.out.println( "We got a connection" );
+		}
+		else unhandled(msg);
 	}
 
 }
