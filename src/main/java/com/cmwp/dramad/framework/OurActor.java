@@ -11,22 +11,32 @@ import akka.io.Tcp;
 public abstract class OurActor extends UntypedActor {
 
 	protected final ActorRef tcpManager = Tcp.get(getContext().system()).manager();
+
+	protected void reply( Object msg ) {
+		getSender().tell( msg, getSelf() );
+	}
+
 	protected ActorRef ourActorOf( Class actorClass ) {
 		return getContext().actorOf(Props.create(actorClass));
 	}
 
-	public static ActorRef actorFrom( ActorRefFactory system ) {
-		Props props = Props.create( getClassStatic() );
-		return
-			(null!=system) 
-			? system.actorOf(props)
-			: null
-		;
+	public void onReceive( Object msg ) {
+		logMsg( msg );
+		if( !dispatchByType(msg) ) unhandled(msg);
 	}
 
-	public static Class getClassStatic() {
-		Class currentClass = new Object() { }.getClass().getEnclosingClass();
-		return currentClass;
+	protected boolean dispatchByType( Object msg ) {
+		return false;
 	}
 
+	protected void logMsg( Object msg ) {
+		// debugging (XXX: replace with something akka builtin probably)
+		// and/or log4j
+		if( null != msg ) {
+			System.out.println(msg.getClass().getName() + "("+ msg.toString() +") --> " + this.getClass().getName());
+		}
+		else {
+			System.out.println("null message -->" + this.getClass().getName());
+		}
+	}
 }

@@ -19,15 +19,6 @@ public class DaemonActor extends OurActor {
 	public enum Msg {
 	}
 
-
-	public static ActorRef actorFrom( ActorRefFactory system ) {
-		return
-			(null!=system) 
-			? system.actorOf(Props.create(DaemonActor.class))
-			: null
-		;
-	}
-
 	/*
 	 * set up client listener socket(s)
 	 */
